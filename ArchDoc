@@ -1,0 +1,224 @@
+Arches (UEFI)
+
+FIRST NETWORK SETUP
+IWD
+
+$ iwctl
+[iwd]# device list
+[iwd]# station name scan
+[iwd]# station name get-networks
+[iwd]# station name connect SSID
+
+
+Alternatively
+
+$ iwctl --passphrase passphrase station name connect SSID
+
+
+PARTITION
+
+1.Create 3 partition for efi, swap, and root as file system (GPT)
+
+cfdisk
+
+/dev/sda1 		efi 			500MB
+/dev/sda2		swap 			4GB+
+/dev/sda3 		root 			rest of disk
+
+Check bloklist
+lsblk
+
+
+2. Format Partition
+
+Root Partition
+mkfs.ext4 /dev/sda3
+
+
+Boot EFI
+mkfs.fat -F 32 /dev/sda1
+
+
+Swap
+mkswap /dev/sda2
+
+
+3. Mounts
+
+Root
+mount /dev/sda3 /mnt
+
+
+Boot
+mkdir -p /mnt/boot/efi
+
+ 
+mount /dev/sda1 /mnt/boot/efi
+
+
+Swap
+swapon /dev/sda2
+
+
+INSTALLATION
+
+pacstrap /mnt base linux linux-firmware sof-firmware base-devel grub efibootmgr nano networkmanager
+
+
+Additionally, adding intel/amd based CPU with
+intel-ucode
+
+Or
+amd-ucode
+
+
+
+GENERATING FILE SYS TAB
+
+genfstab  /mnt
+
+
+Make it a file
+genfstab /mnt > /mnt/etc/fstab
+
+
+Check it with ‘cat’ command
+cat /mnt/etc/fstab
+
+
+
+
+ENTERING INSTALLED SYSTEM
+
+arch-chroot /mnt
+
+
+
+SETTING TIMEZONE
+
+ln -sf /usr/share/zoneinfo/Asia/Jakarta /etc/localtime
+
+
+Run ‘date’ to check
+
+Sync system clock
+hwclock --systohc
+
+
+
+LOCALIZATION
+
+Editing file that contain localization
+nano /etc/locale.gen
+
+
+Erase hashtag (#) in front of the locale you need
+Example:
+#en_US.UTF-8 UTF-8
+
+Write out with ctrl+o and exit with ctrl+x
+
+Specify locale
+nano /etc/locale.conf
+
+
+Inside that file type:
+LANG=en_US.UTF-8
+
+Write out with ctrl+o and exit with ctrl+x
+
+
+
+
+
+
+HOSTNAME SPECIFICATIONS
+
+1. Specify Hostname
+nano /etc/hostname
+name
+
+
+Add a password
+passwd
+
+
+2. Adding user
+useradd -m -G wheel -s /bin/bash name
+
+Adding password for user
+passwd name
+
+
+3. Setup sudo
+
+Exit to root
+exit 
+
+
+Edit sudoers file
+EDITOR=nano visudo
+
+
+Uncomment this bar
+# %wheel ALL=(ALL) ALL
+
+to
+%wheel ALL=(ALL) ALL
+
+Write out with ctrl+o and exit with ctrl+x
+
+After exiting, switch to user
+su name
+
+
+ENABLING CORE SYSTEM SERVICES
+
+NETWORK MANAGER
+systemctl enable NetworkManager
+
+
+SETUP BOOTLOADER
+
+1. Install Grub
+grub-install /dev/sda
+
+
+2. Configure Grub
+grub-mkconfig -o /boot/grub/grub.cfg
+
+
+Exit to root
+exit
+
+
+
+LAST STEP
+
+Unmount Drive
+Unmount -a
+
+
+Reboot 
+reboot 
+
+
+
+
+POST-INSTALLATION
+
+SETTING UP GRAPHICAL ENVIRONTMENT
+
+Desktop Environtment KDE Plasma
+sudo pacman -S plasma sddm
+
+
+Terminal emulator and other essentials
+sudo pacman -S konsole kate firefox
+
+
+Enabling sddm
+sudo systemctl enable --now sddm
+
+
+END..
